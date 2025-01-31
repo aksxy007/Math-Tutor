@@ -1,0 +1,16 @@
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongo_medaid
+    restart: always
+    ports:
+      - "27020:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=atul1306
+      - MONGO_INITDB_ROOT_PASSWORD=12345
+      - MONGO_INITDB_DATABASE=medaid
+    volumes:
+      - mongodb_data:/data/db
+  
+volumes:
+  mongodb_data:

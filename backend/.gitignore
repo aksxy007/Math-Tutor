@@ -1,0 +1,6 @@
+.qodo
+*/node_modules
+*/medaid-env
+*/mathtut-env
+*__pycache__
+models
