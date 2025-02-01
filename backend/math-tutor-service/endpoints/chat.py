@@ -3,28 +3,28 @@ from fastapi.responses import JSONResponse
 from models.Query import Query
 from models.Chat import Chat
 from bot.utils.inference import generate_response
-from bot.utils.get_tokenized_input import get_tokenized_inputs
 from bot.utils.get_system_prompt import get_system_prompt
 from bot.utils.load_model import load_model
 from db.mongo_connection import  MongoDBConnection
 from db.get_chat_history import get_chat_history
 from db.insert_chat import insert_chat
 from datetime import datetime
-# from bot.utils.get_model_chat_template import get_model_chat_template
+
 import torch
 router = APIRouter()
 
 mongoClient = MongoDBConnection()
-model,tokenizer  = load_model()
-device = model.device
+# model,tokenizer  = load_model()
+model  = load_model()
 torch.cuda.empty_cache()
 @router.post("/chat/mathtut")
 async def medaid_response(query:Query):
     try:
         messages=[]
-        print("Model device",device)
         db = mongoClient.get_database()
+        print(f"FastAPI connected to DB: {db.name}")
         collections  = await mongoClient.get_collections()
+        await mongoClient.delete_collection("chats")
         system_prompt = get_system_prompt()
         try:
             result = await get_chat_history(db,query.chatId)
@@ -34,21 +34,14 @@ async def medaid_response(query:Query):
         except Exception as e:
             print("Error in getting chat history: ",e)
         print(messages)
-        # tokenizer = get_model_chat_template(tokenizer)
         messages.append({"role":"user","content":query.query})
-        tokenized_inputs = get_tokenized_inputs(tokenizer,messages,device)
-        # print("tokenized inputs",tokenized_inputs["input_ids"].device)
-        outputs = await generate_response(tokenized_inputs,tokenizer,model)
-        response = tokenizer.batch_decode(outputs,skip_special_tokens=True)
-        if "assistant" in response[0]:
-            assistant_response = response[0].split("assistant")[-1].strip()
-        else:
-            assistant_response = response[0].strip()
+        response = await generate_response(messages,model)
+        assistant_response = response['content']
         messages.append({"role":"assistant","content":assistant_response})
         try:
             user_chat = Chat(chatId=query.chatId,userId=query.userId,role="user",content=query.query,createdAt=datetime.now())
-            assitant_chat = Chat(chatId=query.chatId,userId=query.userId,role="assistant",content=assistant_response,createdAt=datetime.now())
-            chat_list = [user_chat,assitant_chat]
+            assistant_chat = Chat(chatId=query.chatId,userId=query.userId,role="assistant",content=assistant_response,createdAt=datetime.now())
+            chat_list = [user_chat,assistant_chat]
             results = await insert_chat(db,chats=chat_list)
             if results:
                 print("chat inserted successfully")
