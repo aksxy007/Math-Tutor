@@ -1,0 +1,8 @@
+.qodo
+*node_modules
+*medaid-env
+*mathtut-env
+*__pycache__
+FT_models
+*.env
+backend\math-tutor-service\bot\model_cache
