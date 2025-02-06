@@ -1,13 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional,List
 
 class Chat(BaseModel):
-    chatId:int
-    userId:int
-    role:str
-    content:str
+    userId:str
+    title: Optional[str]
     createdAt: Optional[datetime] = None  # Will be assigned automatically
-
+    messages: List[str]
     class Config:
         arbitrary_types_allowed = True

@@ -23,7 +23,7 @@ app.use(cookieParser())
 
 connectDB()
 
-app.use("/auth",AuthRouter)
+app.use("/api/auth",AuthRouter)
 
 app.listen(PORT,()=>{
     console.log(`Identity Service Running at PORT: ${PORT}`)

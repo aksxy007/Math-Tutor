@@ -1,28 +1,32 @@
 import User from "../models/User.js";
 import { generateAccessToken, generateRefreshToken } from "../jwt-utils/jwt-utils.js";
 import { validationResult } from "express-validator";
-import bcrpyt from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 export const register =async (req,res)=>{
+    // console.log(`/register : ${req.body}`)
     const errors = validationResult(req)
     if(!errors.isEmpty()){
         return res.status(400).json({error:errors.array()})
     }
 
     const {username,email,password} = req.body;
+    console.log(username,email,password)
 
     try {
         const existingUser = await User.findOne({email})
+        
         if (existingUser){
-            return res.status(400).json({message:"User with email already exists!!"})
+            console.log("User already exists: ",existingUser.email)
+            return res.status(400).json({success:true,message:"User with email already exists!!"})
         }
 
         const hashedPassword = await bcrypt.hash(password,10)
 
-        const newUser = {
+        const newUser = User({
             username,
             email,
             password:hashedPassword
-        }
+        })
 
         await newUser.save()
 
@@ -33,11 +37,12 @@ export const register =async (req,res)=>{
             httpOnly: true,    // Can't be accessed via JavaScript (prevents XSS)
             secure: process.env.NODE_ENV === 'production',  // Only use in HTTPS
             maxAge: 30 * 24 * 60 * 60 * 1000,  // Refresh token expires in 30 days
-            sameSite: 'Strict',  // Prevents CSRF attacks
+            sameSite: 'None',  // Prevents CSRF attacks
           });
         
-        
+    
         return res.status(200).json({
+            success:true,
             message:"User registered successfully",
             user:newUser,
             accessToken
