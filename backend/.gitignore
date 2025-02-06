@@ -4,5 +4,5 @@
 */mathtut-env
 *__pycache__
 models
-.env
+*env
 *model_cache
