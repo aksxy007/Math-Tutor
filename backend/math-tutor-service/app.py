@@ -17,7 +17,7 @@ app.add_middleware(
 
 
 
-app.include_router(ChatRouter,prefix='/api')
+app.include_router(ChatRouter,prefix='/api/tutor')
 
 # @app.get("/")
 # def home():

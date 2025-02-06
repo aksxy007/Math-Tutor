@@ -2,7 +2,7 @@ import { verifyToken } from "../jwt-utils/jwt-utils.js";
 
 export const logout = (req,res)=>{
     try {
-        const { refreshToken } = req.cookies;
+        const refreshToken = req.cookies?.refresh_token;
 
         if (!refreshToken) {
             return res.status(400).json({ message: 'No refresh token found' });
@@ -16,7 +16,7 @@ export const logout = (req,res)=>{
         }
 
         // Clear the refresh token cookie
-        res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+        res.clearCookie('refresh_token', { httpOnly: true, secure: true });
 
         res.json({ message: 'Logged out successfully' });
     } catch (error) {

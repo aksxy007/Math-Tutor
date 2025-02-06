@@ -38,10 +38,10 @@ class MongoDBConnection:
         print(f"Collections: {collections}")
         return collections
         
-    async def delete_collection(self,collection_name: str):
-        collection = self.db[collection_name]
-        await collection.drop()
+    # async def delete_collection(self,collection_name: str):
+    #     collection = self.db[collection_name]
+    #     await collection.drop()
             
-        print(f"Collection '{collection_name}' has been deleted.")
+    #     print(f"Collection '{collection_name}' has been deleted.")
         
     
