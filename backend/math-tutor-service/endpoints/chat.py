@@ -11,13 +11,15 @@ from db.get_relevant_chat_history import get_contextual_chat_history
 from db.insert_messages import insert_messages
 from db.create_new_chat import create_new_chat
 from db.update_current_chat_messages import update_current_chat_messages
+
+from services.ChatCache import ChatCache
 from datetime import datetime
 
 import torch
 router = APIRouter()
 
 mongoClient = MongoDBConnection()
-# model,tokenizer  = load_model()
+chatCache = ChatCache()
 model  = load_model()
 torch.cuda.empty_cache()
 
@@ -47,7 +49,7 @@ async def medaid_response(query:Query):
         await mongoClient.get_collections()
         system_prompt = get_system_prompt()
         try:
-            result = await get_contextual_chat_history(db,query.chatId,query.query)
+            result = await get_contextual_chat_history(db,chatCache ,query.chatId,query.query)
             messages =  [system_prompt]+ result
             
         except Exception as e:
@@ -63,12 +65,18 @@ async def medaid_response(query:Query):
             assistant_chat = Message(chatId=query.chatId,role="assistant",content=assistant_response,createdAt=datetime.now())
             message_list = [user_chat,assistant_chat]
             results = await insert_messages(db,messages=message_list)
-            
+            user_chat_dict = user_chat.dict()
+            assistant_chat_dict = assistant_chat.dict()
             if results:
                 try:
                     chat_updation = await update_current_chat_messages(db,chatId=query.chatId,messageIds=results.inserted_ids)
                     if chat_updation:
                         print("chat inserted successfully")
+                    try:
+                        print(f"Caching messages from chatid: {query.chatId}")
+                        chatCache.set_chat_history(chat_id=query.chatId,messages=[user_chat_dict,assistant_chat_dict])
+                    except Exception as e:
+                        print(f"Failed to cache mesasges in chatId: {query.chatId}")
                 except Exception as e:
                     print("Error in append message ids in chat",e)
                     

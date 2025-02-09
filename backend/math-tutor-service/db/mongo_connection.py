@@ -1,6 +1,5 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
-from fastapi import FastAPI
 from dotenv import load_dotenv
 
 load_dotenv()  # Load environment variables from .env file
@@ -8,9 +7,8 @@ load_dotenv()  # Load environment variables from .env file
 # MongoDB URI from environment variables
 MONGO_URI = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "medaid")
+
 client = None
-
-
 class MongoDBConnection:
     def __init__(self):
         self.client = self.connectClient()
