@@ -12,7 +12,7 @@ import cookieParser from 'cookie-parser';
 
 import {authenticate} from './middleware/authMIddleware.js'
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3001
 const app =express()
 const redisClient = new Redis(process.env.REDIS_URL) 
 // ✅ Check if Redis is connected

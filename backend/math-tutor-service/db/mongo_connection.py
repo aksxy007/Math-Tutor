@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 from dotenv import load_dotenv
-
+import logging
 load_dotenv()  # Load environment variables from .env file
 
 # MongoDB URI from environment variables
@@ -17,7 +17,7 @@ class MongoDBConnection:
         global client
         if client is None:
             client = AsyncIOMotorClient(MONGO_URI)
-        print("Connected to mongoDB")
+        logging.info("Connected to mongoDB")
         return client
     
     def connectDB(self):
@@ -33,13 +33,13 @@ class MongoDBConnection:
     
     async def get_collections(self):
         collections = await self.db.list_collection_names()
-        print(f"Collections: {collections}")
+        logging.info(f"Collections: {collections}")
         return collections
         
     # async def delete_collection(self,collection_name: str):
     #     collection = self.db[collection_name]
     #     await collection.drop()
             
-    #     print(f"Collection '{collection_name}' has been deleted.")
+    #     logging.info(f"Collection '{collection_name}' has been deleted.")
         
     

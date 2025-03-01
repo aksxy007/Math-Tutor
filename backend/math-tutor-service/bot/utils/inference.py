@@ -1,11 +1,12 @@
+from services.logger import logger
 
 async def generate_response(messages,model):
-    print("Generating response")
+    logger.info("Generating response")
     
     response =  model.create_chat_completion(
     	messages,
         max_tokens = 2048
     )
-    print("Response generated")
+    logger.info("Response generated")
     return response['choices'][0]['message']
     

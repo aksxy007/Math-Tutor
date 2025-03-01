@@ -11,7 +11,7 @@ from db.get_relevant_chat_history import get_contextual_chat_history
 from db.insert_messages import insert_messages
 from db.create_new_chat import create_new_chat
 from db.update_current_chat_messages import update_current_chat_messages
-
+from services.logger import logger
 from services.ChatCache import ChatCache
 from datetime import datetime
 
@@ -30,9 +30,9 @@ async def create_chat(chat:Chat):
         db = mongoClient.get_database()
         chat.createdAt = datetime.now()
         chat.messages=[]
-        print("create chat",chat)
+        logger.info("create chat",chat)
         result = await create_new_chat(db,chat=chat)
-        print("result insert chat",result)
+        logger.info("result insert chat",result)
         return JSONResponse(content={"success":True,"message":str("Chat created successfully"),"chatId":result['chatId']},status_code=status.HTTP_200_OK)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))
@@ -45,18 +45,19 @@ async def medaid_response(query:Query):
     try:
         messages=[]
         db = mongoClient.get_database()
-        print(f"FastAPI connected to DB: {db.name}")
+        logger.info(f"FastAPI connected to DB: {db.name}")
         await mongoClient.get_collections()
         system_prompt = get_system_prompt()
         try:
             result = await get_contextual_chat_history(db,chatCache ,query.chatId,query.query)
             messages =  [system_prompt]+ result
-            
+            logger.info(f"messages: {messages}")
         except Exception as e:
-            print("Error in getting chat history: ",e)
+            messages.append(system_prompt)
+            logger.info(f"Error in getting chat history: {e}")
         
         messages.append({"role":"user","content":query.query})
-        print(messages)
+        logger.info(messages)
         response = await generate_response(messages,model)
         assistant_response = response['content']
         messages.append({"role":"assistant","content":assistant_response})
@@ -65,26 +66,27 @@ async def medaid_response(query:Query):
             assistant_chat = Message(chatId=query.chatId,role="assistant",content=assistant_response,createdAt=datetime.now())
             message_list = [user_chat,assistant_chat]
             results = await insert_messages(db,messages=message_list)
-            user_chat_dict = user_chat.dict()
-            assistant_chat_dict = assistant_chat.dict()
+            user_chat_dict = {"role":"user","content":query.query}
+            assistant_chat_dict = {"role":"assistant","content":assistant_response}
             if results:
                 try:
                     chat_updation = await update_current_chat_messages(db,chatId=query.chatId,messageIds=results.inserted_ids)
                     if chat_updation:
-                        print("chat inserted successfully")
+                        logger.info("chat inserted successfully")
                     try:
-                        print(f"Caching messages from chatid: {query.chatId}")
+                        logger.info(f"Caching messages from chatid: {query.chatId}")
                         chatCache.set_chat_history(chat_id=query.chatId,messages=[user_chat_dict,assistant_chat_dict])
                     except Exception as e:
-                        print(f"Failed to cache mesasges in chatId: {query.chatId}")
+                        logger.info(f"Failed to cache mesasges in chatId: {query.chatId} , error: {e}")
                 except Exception as e:
-                    print("Error in append message ids in chat",e)
+                    logger.info(f"Error in append message ids in chat: {e}")
                     
         except Exception as e:
-            print("Error in inserting chat",e)
-        print(assistant_response)
+            logger.info("Error in inserting chat",e)
+        logger.info(assistant_response)
         return JSONResponse(content={"success":True,"message":str(assistant_response),"chatId":query.chatId},status_code=status.HTTP_200_OK)
 
     except Exception as e:
+        logger.info(f"Error in chat: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail = str(e))
     

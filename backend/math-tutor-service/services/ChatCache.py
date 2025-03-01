@@ -6,6 +6,7 @@ import redis
 import json
 from typing import List, Dict
 from datetime import timedelta
+from services.logger import logger
 from zlib import compress, decompress
 
 REDIS_URL = os.getenv("REDIS_URL","redis://localhost:6379")
@@ -15,7 +16,7 @@ class ChatCache:
         # Initialize Redis connection
         self.redis_client = redis.StrictRedis.from_url(REDIS_URL, decode_responses=True)
         if self.redis_client!=None:
-            print("Connected to redis")
+            logger.info("Connected to redis")
 
     def compress_data(self, data: List[Dict]) -> bytes:
         # Compress data before storing it in Redis
@@ -36,14 +37,14 @@ class ChatCache:
         # Trim the list to keep only the latest 'max_messages' messages
         self.redis_client.ltrim(chat_id, 0, max_messages - 1)
 
-        print(f"Chat history for {chat_id} updated in Redis")
+        logger.info(f"Chat history for {chat_id} updated in Redis")
 
     def get_chat_history(self, chat_id: str) -> List[Dict]:
         # Get all messages for the chat from Redis
         stored_messages = self.redis_client.lrange(chat_id, 0, -1)
 
         if not stored_messages:
-            print(f"No chat history found in Redis for {chat_id}")
+            logger.info(f"No chat history found in Redis for {chat_id}")
             return []
 
         # Decompress the stored messages
@@ -52,4 +53,4 @@ class ChatCache:
     def clear_chat_history(self, chat_id: str) -> None:
         # Clear the chat history for the given chat ID in Redis
         self.redis_client.delete(chat_id)
-        print(f"Chat history for {chat_id} cleared in Redis")
+        logger.info(f"Chat history for {chat_id} cleared in Redis")
